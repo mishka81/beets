@@ -24,7 +24,7 @@ from musicbrainzngs.musicbrainz import MusicBrainzError
 from beets import config
 from beets.autotag import hooks
 from beets.dbcore import types
-from beets.library import Item
+from beets.library import Item, Album
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs, print_
 
@@ -219,10 +219,21 @@ class MissingPlugin(BeetsPlugin):
             if total:
                 continue
 
-            missing_titles = {rg["title"] for rg in missing}
+            fmt = config["format_album"].get()
 
-            for release_title in missing_titles:
-                print_("{} - {}".format(artist[0], release_title))
+            for rg in missing:
+                if "primary-type" in rg:
+                    release_type = rg["primary-type"]
+
+                album = Album(
+                    album=rg["title"],
+                    year=rg["first-release-date"].split("-")[0],
+                    albumartist=artist[0],
+                    albumtype=release_type,
+                    mb_releasegroupid=rg["id"],
+                )
+
+                print_(format(album, fmt))
 
         if total:
             print(total_missing)
